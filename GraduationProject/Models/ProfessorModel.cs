@@ -6,6 +6,7 @@
         public string ProfessorFirstName { get; set; }
         public string ProfessorSecondName { get; set; }
         public string ProfessorEmail { get; set; }
+        public List<int> SpecializationId { get; set; }
         public List<ProjectRequestModel> CoordinatedProjects { get; set; }
     }
 }
