@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GraduationProject.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
     public class StudentController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -12,18 +14,18 @@ namespace GraduationProject.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        [HttpGet]
-        [Route("api/[Controller]")]
         public async Task<ActionResult<List<ProfessorModel>>> GetAvailableCoordinatorsAsync(int studentSpecializationId)
         {
-            var coordinatorsList = await _context.Professors.Where(p => p.SpecializationId.Contains(studentSpecializationId)).ToListAsync();
+            var coordinatorsList = await _context.Professors.Where(p => p.SpecializationId.Equals(studentSpecializationId) && p.NumberOfCoordinatedProjects < 20).ToListAsync();
 
-            return coordinatorsList;
+            return Ok(coordinatorsList);
+        }
+
+        public async Task<ActionResult<List<ProjectIdeaModel>>> GetProjectIdeasOfSelectedProfessor(int professsorId)
+        {
+            var professorProjectList = await _context.ProposedProjectIdeas.Where(pr => pr.ProfessorId.Equals(professsorId)).ToListAsync();
+
+            return Ok(professorProjectList);
         }
 
         [HttpGet]
@@ -34,13 +36,25 @@ namespace GraduationProject.Controllers
         }
 
         [HttpPost]
-        [Route("api/[controller]/{id}")]
+        [Route("api/[controller]")]
         public async Task<IActionResult> PostProjectRequestAsync(ProjectRequestModel projectRequest)
-        { 
-            _context.ProjectRequests.Add(projectRequest);
-            await _context.SaveChangesAsync();
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
-            return Created();
+                _context.ProjectRequests.Add(projectRequest);
+                await _context.SaveChangesAsync();
+
+                return Created();
+            }
+            catch (Exception ex)
+            {
+                throw (ex);
+            }
         }
     }
 }

@@ -13,5 +13,6 @@ namespace GraduationProject.Models
         public DbSet<ProfessorModel> Professors { get; set; }
         public DbSet<SecretaryModel> Secretary { get; set; }
         public DbSet<ProjectRequestModel> ProjectRequests { get; set; }
+        public DbSet<ProjectIdeaModel> ProposedProjectIdeas { get; set; }
     }
 }
