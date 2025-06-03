@@ -2,12 +2,14 @@
 {
     public class ProfessorModel
     {
-        public int ProfessorId { get; set; }
-        public string ProfessorFirstName { get; set; }
-        public string ProfessorSecondName { get; set; }
-        public string ProfessorEmail { get; set; }
-        public List<int> SpecializationId { get; set; }
-        public int NumberOfCoordinatedProjects { get; set; }
-        public List<ProjectRequestModel> CoordinatedProjects { get; set; }
+        public int Id { get; set; }
+        public string FirstName { get; set; }
+        public string SecondName { get; set; }
+        public string Email { get; set; }
+        public int? NumberOfCoordinatedProjects { get; set; }
+        public ICollection<ProjectRequestModel>? CoordinatedProjects { get; set; }
+        public ICollection<ProjectIdeaModel>? ProjectIdeas { get; set; }
+        public int DepartmentId { get; set; }
+        public DepartmentModel Department { get; set; }
     }
 }

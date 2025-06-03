@@ -2,9 +2,11 @@
 {
     public class SecretaryModel
     {
-        public int SecretaryId { get; set; }
-        public string SecretaryFirstName { get; set; }
-        public string SecreatarySecondName { get; set; }
-        public string SecretaryEmail { get; set; }
+        public int Id { get; set; }
+        public string FirstName { get; set; }
+        public string SecondName { get; set; }
+        public string Email { get; set; }
+        public int FacultyId { get; set; }
+        public FacultyModel Faculty { get; set; }
     }
 }

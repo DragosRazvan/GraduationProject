@@ -5,11 +5,14 @@ namespace GraduationProject.Models
 {
     public class StudentModel
     {
-        public int StudentId { get; set; }
-        public string StudentFirstName { get; set; }
-        public string StudentSecondName { get; set; }
-        public string StudentEmail { get; set; }
-        public ProjectRequestModel ProjectRequest { get; set; }
-
+        public int Id { get; set; }
+        public string FirstName { get; set; }
+        public string SecondName { get; set; }
+        public string Email { get; set; }
+        public string LevelOfEducation { get; set; } //bachelor or master degree
+        public int? ProjectRequestId { get; set; }
+        public ProjectRequestModel? ProjectRequest { get; set; }
+        public int SpecializationId { get; set; }
+        public SpecializationModel Specialization { get; set; }
     }
 }

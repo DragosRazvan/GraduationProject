@@ -1,4 +1,5 @@
-﻿using GraduationProject.Models;
+﻿using GraduationProject.DTOs;
+using GraduationProject.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
@@ -14,18 +15,61 @@ namespace GraduationProject.Controllers
             _context = context;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<List<ProjectRequestModel>>> GetAllProjectRequestsAsync(int professorId)
+        //[HttpGet("GetAllProjectRequests")]
+        //public async Task<ActionResult<List<ProjectRequestModel>>> GetAllProjectRequestsAsync(int professorId)
+        //{
+        //    return await _context.ProjectRequests.Where(r => r.ProfessorId == professorId).ToListAsync();
+        //}
+
+        [HttpGet("GetAllProjectRequests")]
+        public async Task<ActionResult<List<ProjectRequestDto>>> GetAllProjectRequestsAsync(int professorId)
         {
-            return await _context.ProjectRequests.Where(r => r.ProfessorId == professorId).ToListAsync();
+            var projectRequests = await _context.ProjectRequests.Where(r => r.ProfessorId == professorId).ToListAsync();
+
+            List<ProjectRequestDto> projectRequestDtos = new List<ProjectRequestDto>();
+
+            foreach(ProjectRequestModel project in projectRequests)
+            {
+                ProjectRequestDto p1 = new ProjectRequestDto
+                {
+                    Title = project.Title,
+                    Description = project.Description,
+                    LevelOfEducation = project.LevelOfEducation,
+                    IsAcceptedByProfessor = project.IsAcceptedByProfessor,
+                    StudentId = project.StudentId,
+                    ProfessorId = project.ProfessorId
+                };
+
+                projectRequestDtos.Add(p1);
+            }
+
+            return projectRequestDtos;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<ProjectRequestModel>> GetSpecificProjectRequestAsync(int professorId, int studentId)
-        {
-            var projectRequest = await _context.ProjectRequests.Where(r => r.ProfessorId == professorId && r.StudentId == studentId).FirstOrDefaultAsync() ?? new ProjectRequestModel();
+        //[HttpGet("GetSpecificProjectRequest/{studentId}")]
+        //public async Task<ActionResult<ProjectRequestModel>> GetSpecificProjectRequestAsync(int professorId, int studentId)
+        //{
+        //    var projectRequest = await _context.ProjectRequests.Where(r => r.ProfessorId == professorId && r.StudentId == studentId).FirstOrDefaultAsync() ?? new ProjectRequestModel();
 
-            return projectRequest;
+        //    return projectRequest;
+        //}
+
+        [HttpGet("GetSpecificProjectRequest/{studentId}")]
+        public async Task<ActionResult<ProjectRequestDto>> GetSpecificProjectRequestAsync(int professorId, int studentId)
+        {
+            ProjectRequestModel projectRequest = await _context.ProjectRequests.Where(r => r.ProfessorId == professorId && r.StudentId == studentId).FirstOrDefaultAsync();
+
+            ProjectRequestDto projectRequestDto = new ProjectRequestDto
+            {
+                Title = projectRequest.Title,
+                Description = projectRequest.Description,
+                LevelOfEducation = projectRequest.LevelOfEducation,
+                IsAcceptedByProfessor = projectRequest.IsAcceptedByProfessor,
+                StudentId = projectRequest.StudentId,
+                ProfessorId = projectRequest.ProfessorId
+            };
+
+            return Ok(projectRequestDto);
         }
 
         //[HttpPut]
@@ -53,7 +97,7 @@ namespace GraduationProject.Controllers
         //    return Ok();
         //}
 
-        [HttpPut]
+        [HttpPut("UpdateProjectRequest/{projectRequestId}")]
         public async Task<ActionResult> UpdateProjectRequestStateAsync(int projectRequestId, bool accepted)
         {
             try
@@ -73,7 +117,13 @@ namespace GraduationProject.Controllers
                     return Ok("Project request deleted successfully!");
                 }
 
-                _context.Entry(projectRequest).Property(p => p.IsAcceptedByProfessor).IsModified = accepted;
+                projectRequest.IsAcceptedByProfessor = accepted;
+                _context.Entry(projectRequest).Property(p => p.IsAcceptedByProfessor).IsModified = true;
+
+                var professor = await _context.Professors.FindAsync(projectRequest.ProfessorId);
+                professor.NumberOfCoordinatedProjects++;
+                _context.Entry(professor).Property(p => p.NumberOfCoordinatedProjects).IsModified = true;
+
                 await _context.SaveChangesAsync();
 
                 return Ok("Project request accepted successfully!");
@@ -84,17 +134,25 @@ namespace GraduationProject.Controllers
             }
         }
 
-        [HttpPost]
-        public async Task<ActionResult> PostNewProjectIdeaAsync(ProjectIdeaModel projectIdeaModel)
+        [HttpPost("PostNewProjectIdea")]
+        public async Task<ActionResult> PostNewProjectIdeaAsync([FromBody] NewProjectIdeaDto newProjectIdeaDto)
         {
             try
             {
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(projectIdeaModel);
+                    return BadRequest(newProjectIdeaDto);
                 }
 
-                _context.ProposedProjectIdeas.Add(projectIdeaModel);
+                var newProjectIdeaModel = new ProjectIdeaModel
+                {
+                    Title = newProjectIdeaDto.Title,
+                    Description = newProjectIdeaDto.Description,
+                    LevelOfEducation = newProjectIdeaDto.LevelOfEducation,
+                    ProfessorId = newProjectIdeaDto.ProfessorId
+                };
+
+                _context.ProfessorsProjectIdeas.Add(newProjectIdeaModel);
                 await _context.SaveChangesAsync();
 
                 return Created();
