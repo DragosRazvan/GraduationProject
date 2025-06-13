@@ -1,4 +1,5 @@
 ﻿using Azure.Core;
+using GraduationProject.DTOs;
 using GraduationProject.Models;
 using GraduationProject.Services;
 using Microsoft.AspNetCore.Identity;
@@ -12,7 +13,7 @@ using System.Text;
 namespace GraduationProject.Controllers
 {
     [ApiController]
-    [Route("api/controller")]
+    [Route("api/[controller]")]
     public class AuthController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -28,7 +29,7 @@ namespace GraduationProject.Controllers
         }
 
         [HttpPost("Login")]
-        public async Task<IActionResult> Login(LoginModel loginModel)
+        public async Task<IActionResult> Login(LoginDto loginModel)
         {
             var user = await _userManager.FindByEmailAsync(loginModel.Email);
             if (user == null || !await _userManager.CheckPasswordAsync(user, loginModel.Password))
@@ -40,12 +41,21 @@ namespace GraduationProject.Controllers
 
         private async Task<string> GenerateJwtToken(ApplicationUser user)
         {
+            var userRoles = await _userManager.GetRolesAsync(user);
+
             var claims = new List<Claim>
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-            new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+            {
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email)
+            };
+
+            // Add each role as a claim
+            foreach (var role in userRoles)
+            {
+                claims.Add(new Claim("role", role));
+            }
 
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));

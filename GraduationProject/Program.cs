@@ -12,7 +12,7 @@ namespace GraduationProject
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +23,7 @@ namespace GraduationProject
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                             .AddEntityFrameworkStores<ApplicationDbContext>()
                             .AddDefaultTokenProviders();
 
@@ -32,15 +32,30 @@ namespace GraduationProject
                     {
                         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                         {
-                            ValidateIssuer = false,
-                            ValidateAudience = false,
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
                             ValidateIssuerSigningKey = true,
+                            ValidIssuer = "your-app",
+                            ValidAudience = "your-app",
                             IssuerSigningKey = new SymmetricSecurityKey(
                                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                         };
                     });
-
+            builder.Services.AddAuthorization();
             builder.Services.AddScoped<JwtTokenService>();
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200") // your Angular dev server
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -56,6 +71,14 @@ namespace GraduationProject
 
 
             app.MapControllers();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                await DataSeeder.Seed(services);
+            }
+
+            app.UseCors();
 
             app.Run();
         }

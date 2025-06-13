@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using GraduationProject.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -9,16 +10,16 @@ namespace GraduationProject.Services
     public class JwtTokenService
     {
         private readonly IConfiguration _config;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
     
 
-        public JwtTokenService(IConfiguration config, UserManager<IdentityUser> userManager) {
+        public JwtTokenService(IConfiguration config, UserManager<ApplicationUser> userManager) {
                 _config = config;
                 _userManager = userManager;
         
         }
 
-        public async Task<string> CreateTokenAsync(IdentityUser user)
+        public async Task<string> CreateTokenAsync(ApplicationUser user)
         {
             var roles = await _userManager.GetRolesAsync(user);
 
