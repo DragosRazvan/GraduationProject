@@ -211,7 +211,7 @@ namespace GraduationProject.Migrations
                     b.Property<int>("ProfessorId")
                         .HasColumnType("int");
 
-                    b.Property<int>("StudentId")
+                    b.Property<int?>("StudentId")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -223,7 +223,8 @@ namespace GraduationProject.Migrations
                     b.HasIndex("ProfessorId");
 
                     b.HasIndex("StudentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[StudentId] IS NOT NULL");
 
                     b.ToTable("ProjectRequests");
                 });
@@ -499,8 +500,7 @@ namespace GraduationProject.Migrations
                     b.HasOne("GraduationProject.Models.StudentModel", "Student")
                         .WithOne("ProjectRequest")
                         .HasForeignKey("GraduationProject.Models.ProjectRequestModel", "StudentId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Professor");
 

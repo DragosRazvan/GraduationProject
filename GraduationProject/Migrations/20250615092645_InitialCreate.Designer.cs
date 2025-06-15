@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GraduationProject.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250524141802_MakeSomePropertiesNullable")]
-    partial class MakeSomePropertiesNullable
+    [Migration("20250615092645_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -214,7 +214,7 @@ namespace GraduationProject.Migrations
                     b.Property<int>("ProfessorId")
                         .HasColumnType("int");
 
-                    b.Property<int>("StudentId")
+                    b.Property<int?>("StudentId")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -226,7 +226,8 @@ namespace GraduationProject.Migrations
                     b.HasIndex("ProfessorId");
 
                     b.HasIndex("StudentId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[StudentId] IS NOT NULL");
 
                     b.ToTable("ProjectRequests");
                 });
@@ -308,7 +309,7 @@ namespace GraduationProject.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ProjectRequestId")
+                    b.Property<int?>("ProjectRequestId")
                         .HasColumnType("int");
 
                     b.Property<string>("SecondName")
@@ -502,8 +503,7 @@ namespace GraduationProject.Migrations
                     b.HasOne("GraduationProject.Models.StudentModel", "Student")
                         .WithOne("ProjectRequest")
                         .HasForeignKey("GraduationProject.Models.ProjectRequestModel", "StudentId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Professor");
 

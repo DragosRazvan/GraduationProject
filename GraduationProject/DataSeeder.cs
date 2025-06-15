@@ -20,7 +20,9 @@ namespace GraduationProject
 
             await CreateUser(userManager, "secretarInfo@uab.ro", "Uab1234!", "secretary");
             await CreateUser(userManager, "incze.arpad@uab.ro", "Uab1234!", "professor");
+            await CreateUser(userManager, "muntean.maria@uab.ro", "Uab1234!", "professor");
             await CreateUser(userManager, "barbut.dragos.pabd23@uab.ro", "Uab1234!", "student");
+            await CreateUser(userManager, "dragan.andrei.info24@uab.ro", "Uab1234!", "student");
         }
 
         private static async Task CreateUser(UserManager<ApplicationUser> userManager, string email, string password, string role)

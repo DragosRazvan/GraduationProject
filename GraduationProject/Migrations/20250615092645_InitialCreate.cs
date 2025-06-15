@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace GraduationProject.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -232,6 +232,7 @@ namespace GraduationProject.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LevelOfEducation = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DeparmentId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -275,7 +276,7 @@ namespace GraduationProject.Migrations
                     SecondName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LevelOfEducation = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ProjectRequestId = table.Column<int>(type: "int", nullable: false),
+                    ProjectRequestId = table.Column<int>(type: "int", nullable: true),
                     SpecializationId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -298,7 +299,7 @@ namespace GraduationProject.Migrations
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LevelOfEducation = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsAcceptedByProfessor = table.Column<bool>(type: "bit", nullable: false),
-                    StudentId = table.Column<int>(type: "int", nullable: false),
+                    StudentId = table.Column<int>(type: "int", nullable: true),
                     ProfessorId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -379,7 +380,8 @@ namespace GraduationProject.Migrations
                 name: "IX_ProjectRequests_StudentId",
                 table: "ProjectRequests",
                 column: "StudentId",
-                unique: true);
+                unique: true,
+                filter: "[StudentId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Secretary_FacultyId",

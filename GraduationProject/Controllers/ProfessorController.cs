@@ -6,6 +6,8 @@ using System.Data;
 
 namespace GraduationProject.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
     public class ProfessorController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -161,6 +163,34 @@ namespace GraduationProject.Controllers
             {
                 throw (ex);
             }
+        }
+
+        [HttpGet("GetProfessorsByDepartment/{departmentId}")]
+        public async Task<ActionResult<ICollection<ProfessorDto>>> GetProfessorsByDepartment(int departmentId)
+        {
+            List<ProfessorModel> professors = await _context.Professors.Where(p => p.DepartmentId == departmentId).ToListAsync();
+
+            List<ProfessorDto> professorsDto = new List<ProfessorDto>();
+
+            foreach(ProfessorModel professor in professors)
+            {
+                ProfessorDto prof = new ProfessorDto
+                {
+                    Id = professor.Id,
+                    FirstName = professor.FirstName,
+                    SecondName = professor.SecondName,
+                    Email = professor.Email,
+                    NumberOfCoordinatedProjects = professor.NumberOfCoordinatedProjects,
+                    DepartmentId = professor.DepartmentId
+                };
+
+                professorsDto.Add(prof);
+            }
+
+            if (professorsDto == null)
+                return NotFound();
+
+            return Ok(professorsDto);
         }
     }
 }

@@ -14,8 +14,8 @@ namespace GraduationProject.Models
         public string Description { get; set; }
         public string LevelOfEducation { get; set; } //bachelor or master degree
         public bool IsAcceptedByProfessor { get; set; }
-        public int StudentId { get; set; }
-        public StudentModel Student { get; set; }
+        public int? StudentId { get; set; }
+        public StudentModel? Student { get; set; }
         public int ProfessorId { get; set; }
         public ProfessorModel Professor { get; set; }
     }
