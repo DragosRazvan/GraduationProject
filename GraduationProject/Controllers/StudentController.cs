@@ -127,6 +127,14 @@ namespace GraduationProject.Controllers
             projectRequestModel.StudentId = updateProjectRequestDto.StudentId;
             _context.Entry(projectRequestModel).Property(p => p.StudentId).IsModified = true;
 
+            StudentModel student = await _context.Students.FindAsync(updateProjectRequestDto.StudentId);
+
+            if (student == null)
+                return NotFound();
+
+            student.ProjectRequestId = projectRequestModel.Id;
+            _context.Entry(student).Property(s => s.ProjectRequestId).IsModified = true;
+
             await _context.SaveChangesAsync();
 
             return Ok();
@@ -151,7 +159,7 @@ namespace GraduationProject.Controllers
                 SpecializationId = studentModel.SpecializationId
             };
 
-            return Ok(studentDto);
+                return Ok(studentDto);
         }
 
         [HttpGet("{studentId}/GetDepartmentId")]
