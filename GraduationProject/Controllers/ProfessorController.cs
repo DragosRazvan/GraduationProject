@@ -23,29 +23,109 @@ namespace GraduationProject.Controllers
         //    return await _context.ProjectRequests.Where(r => r.ProfessorId == professorId).ToListAsync();
         //}
 
-        [HttpGet("GetAllProjectRequests")]
-        public async Task<ActionResult<List<ProjectRequestDto>>> GetAllProjectRequestsAsync(int professorId)
+        [HttpGet("GetAllProjectRequests/{professorId}")]
+        public async Task<ActionResult<List<ProjectsCoordinatedByProfessorDto>>> GetAllProjectRequestsAsync(int professorId)
         {
-            var projectRequests = await _context.ProjectRequests.Where(r => r.ProfessorId == professorId).ToListAsync();
+            List<ProjectRequestModel> projectRequests = await _context.ProjectRequests.Where(r => r.ProfessorId == professorId && r.StudentId != null).ToListAsync();
 
-            List<ProjectRequestDto> projectRequestDtos = new List<ProjectRequestDto>();
+            if (projectRequests == null)
+                return NotFound("No project reuqests");
+
+            List<ProjectsCoordinatedByProfessorDto> projectsCoordinatedByProfessorDtos = new List<ProjectsCoordinatedByProfessorDto>();
 
             foreach(ProjectRequestModel project in projectRequests)
             {
-                ProjectRequestDto p1 = new ProjectRequestDto
+                StudentModel studentMdodel = await _context.Students.FindAsync(project.StudentId);
+
+                if (studentMdodel == null)
+                    return NotFound("No student found");
+
+                StudentDto student = new StudentDto
                 {
+                    Id = studentMdodel.Id,
+                    FirstName = studentMdodel.FirstName,
+                    SecondName = studentMdodel.SecondName,
+                    Email = studentMdodel.Email,
+                    LevelOfEducation = studentMdodel.LevelOfEducation,
+                    ProjectRequestId = studentMdodel.ProjectRequestId,
+                    SpecializationId = studentMdodel.SpecializationId
+                };
+
+                ProjectsCoordinatedByProfessorDto p1 = new ProjectsCoordinatedByProfessorDto
+                {
+                    Id = project.Id,
                     Title = project.Title,
                     Description = project.Description,
                     LevelOfEducation = project.LevelOfEducation,
                     IsAcceptedByProfessor = project.IsAcceptedByProfessor,
-                    StudentId = project.StudentId,
+                    Student = student,
                     ProfessorId = project.ProfessorId
                 };
 
-                projectRequestDtos.Add(p1);
+                if (p1.IsAcceptedByProfessor)
+                    p1.Status = "acceptată";
+                else
+                    p1.Status = "în așteptare";
+
+                projectsCoordinatedByProfessorDtos.Add(p1);
             }
 
-            return projectRequestDtos;
+            return projectsCoordinatedByProfessorDtos;
+        }
+
+        [HttpGet("GetOwnProjects/{professorId}")]
+        public async Task<ActionResult<ICollection<ProfessorOwnProjectDto>>> GetOwnProjectsAsync(int professorId)
+        {
+            List<ProjectRequestModel> projectsModel = await _context.ProjectRequests.Where(p => p.ProfessorId == professorId).ToListAsync<ProjectRequestModel>();
+
+            if (projectsModel == null)
+                return NotFound();
+
+            List<ProfessorOwnProjectDto> professorProjects = new List<ProfessorOwnProjectDto>();
+
+            foreach(ProjectRequestModel project in projectsModel)
+            {
+                ProjectIdeaModel projectIdea = await _context.ProfessorsProjectIdeas.Where(p => p.Title == project.Title).FirstOrDefaultAsync();
+
+                if(projectIdea != null)
+                {
+                    StudentDto student = new StudentDto();
+                    StudentModel studentModel;
+                    if (project.StudentId != null) {
+                        studentModel = await _context.Students.FindAsync(project.StudentId);
+                        
+                        student = new StudentDto
+                        {
+                            Id = studentModel.Id,
+                            FirstName = studentModel.FirstName,
+                            SecondName = studentModel.SecondName,
+                            Email = studentModel.Email,
+                            LevelOfEducation = studentModel.LevelOfEducation,
+                            SpecializationId = studentModel.SpecializationId,
+                            ProjectRequestId = studentModel.ProjectRequestId
+                        };
+                    }
+                    else
+                    {
+                        studentModel = null;
+                    }
+
+                    ProfessorOwnProjectDto p = new ProfessorOwnProjectDto
+                    {
+                        Id = project.Id,
+                        Title = project.Title,
+                        Description = project.Description,
+                        LevelOfEducation = project.LevelOfEducation,
+                        ProfessorId = project.ProfessorId,
+                        Student = student
+                    };
+
+                    professorProjects.Add(p);
+                }
+
+            }
+
+            return Ok(professorProjects);
         }
 
         //[HttpGet("GetSpecificProjectRequest/{studentId}")]
@@ -99,19 +179,19 @@ namespace GraduationProject.Controllers
         //    return Ok();
         //}
 
-        [HttpPut("UpdateProjectRequest/{projectRequestId}")]
-        public async Task<ActionResult> UpdateProjectRequestStateAsync(int projectRequestId, bool accepted)
+        [HttpPut("UpdateProjectRequest")]
+        public async Task<ActionResult> UpdateProjectRequestStateAsync([FromBody] UpdateProjectRequestProfessorDto updateProjectRequestProfessorDto)
         {
             try
             {
-                var projectRequest = await _context.ProjectRequests.FindAsync(projectRequestId);
+                var projectRequest = await _context.ProjectRequests.FindAsync(updateProjectRequestProfessorDto.ProjectRequestId);
 
                 if (projectRequest == null)
                 {
                     return NotFound("Project request not found.");
                 }
 
-                if (!accepted)
+                if (!updateProjectRequestProfessorDto.Accepted)
                 {
                     _context.ProjectRequests.Remove(projectRequest);
                     await _context.SaveChangesAsync();
@@ -119,7 +199,7 @@ namespace GraduationProject.Controllers
                     return Ok("Project request deleted successfully!");
                 }
 
-                projectRequest.IsAcceptedByProfessor = accepted;
+                projectRequest.IsAcceptedByProfessor = updateProjectRequestProfessorDto.Accepted;
                 _context.Entry(projectRequest).Property(p => p.IsAcceptedByProfessor).IsModified = true;
 
                 var professor = await _context.Professors.FindAsync(projectRequest.ProfessorId);
@@ -146,15 +226,27 @@ namespace GraduationProject.Controllers
                     return BadRequest(newProjectIdeaDto);
                 }
 
-                var newProjectIdeaModel = new ProjectIdeaModel
+                ProjectIdeaModel newProjectIdeaModel = new ProjectIdeaModel
                 {
                     Title = newProjectIdeaDto.Title,
                     Description = newProjectIdeaDto.Description,
                     LevelOfEducation = newProjectIdeaDto.LevelOfEducation,
                     ProfessorId = newProjectIdeaDto.ProfessorId
                 };
-
                 _context.ProfessorsProjectIdeas.Add(newProjectIdeaModel);
+
+
+                ProjectRequestModel newProjectRequestModel = new ProjectRequestModel
+                {
+                    Title = newProjectIdeaDto.Title,
+                    Description = newProjectIdeaDto.Description,
+                    LevelOfEducation = newProjectIdeaDto.LevelOfEducation,
+                    ProfessorId = newProjectIdeaDto.ProfessorId,
+                    StudentId = null,
+                    IsAcceptedByProfessor = false
+                };
+                _context.ProjectRequests.Add(newProjectRequestModel);
+
                 await _context.SaveChangesAsync();
 
                 return Created();
@@ -163,6 +255,38 @@ namespace GraduationProject.Controllers
             {
                 throw (ex);
             }
+        }
+
+        [HttpPut("UpdateProjectIdea/{oldProjectTitle}")]
+        public async Task<ActionResult> UpdateProjectIdeaAsync([FromBody] NewProjectIdeaDto newProjectIdeaDto, string oldProjectTitle)
+        {
+            ProjectRequestModel project = await _context.ProjectRequests.Where(p => p.Title == oldProjectTitle).FirstOrDefaultAsync<ProjectRequestModel>();
+
+            if (project == null)
+                return NotFound("No project request found");
+
+            project.Title = newProjectIdeaDto.Title;
+            _context.Entry(project).Property(p => p.Title).IsModified = true;
+
+            project.Description = newProjectIdeaDto.Description;
+            _context.Entry(project).Property(p => p.Description).IsModified = true;
+
+
+
+            ProjectIdeaModel projectIdea = await _context.ProfessorsProjectIdeas.Where(p => p.Title == oldProjectTitle).FirstOrDefaultAsync<ProjectIdeaModel>();
+
+            if (projectIdea == null)
+                return NotFound("No project idea found");
+
+            projectIdea.Title = newProjectIdeaDto.Title;
+            _context.Entry(projectIdea).Property(p => p.Title).IsModified = true;
+
+            projectIdea.Description = newProjectIdeaDto.Description;
+            _context.Entry(projectIdea).Property(p => p.Description).IsModified = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
         }
 
         [HttpGet("GetProfessorsByDepartment/{departmentId}")]
@@ -191,6 +315,34 @@ namespace GraduationProject.Controllers
                 return NotFound();
 
             return Ok(professorsDto);
+        }
+
+        [HttpGet("GetProfessorByEmail/{professorEmail}")]
+        public async Task<ActionResult<ProfessorDto>> GetProfessorByEmailAsync(string professorEmail)
+        {
+            try
+            {
+                ProfessorModel professorModel = await _context.Professors.Where(p => p.Email == professorEmail).FirstOrDefaultAsync();
+
+                if (professorModel == null)
+                    return NotFound();
+
+                ProfessorDto professor = new ProfessorDto
+                {
+                    Id = professorModel.Id,
+                    FirstName = professorModel.FirstName,
+                    SecondName = professorModel.SecondName,
+                    Email = professorModel.Email,
+                    NumberOfCoordinatedProjects = professorModel.NumberOfCoordinatedProjects,
+                    DepartmentId = professorModel.DepartmentId
+                };
+
+                return Ok(professor);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
     }
 }

@@ -135,6 +135,12 @@ namespace GraduationProject.Controllers
             student.ProjectRequestId = projectRequestModel.Id;
             _context.Entry(student).Property(s => s.ProjectRequestId).IsModified = true;
 
+            ProfessorModel professor = await _context.Professors.FindAsync(projectRequestModel.ProfessorId);
+            if (professor == null)
+                return NotFound();
+            professor.NumberOfCoordinatedProjects++;
+            _context.Entry(professor).Property(p => p.NumberOfCoordinatedProjects).IsModified = true;
+
             await _context.SaveChangesAsync();
 
             return Ok();
@@ -174,6 +180,45 @@ namespace GraduationProject.Controllers
 
 
             return Ok(specializationModel.DeparmentId);
+        }
+
+        [HttpGet("GetStudentById/{studentId}")]
+        public async Task<ActionResult<StudentDto>> GetStudentByIdAsync(int studentId)
+        {
+            StudentModel studentModel = await _context.Students.FindAsync(studentId);
+
+            if (studentModel == null)
+                return NotFound();
+
+            StudentDto student = new StudentDto
+            {
+                Id = studentModel.Id,
+                FirstName = studentModel.FirstName,
+                SecondName = studentModel.SecondName,
+                Email = studentModel.Email,
+                LevelOfEducation = studentModel.LevelOfEducation,
+                SpecializationId = studentModel.SpecializationId
+            };
+
+            return Ok(student);
+        }
+
+        [HttpGet("GetStudentSpecialization/{specializationId}")]
+        public async Task<ActionResult<SpecializationDto>> GetStudentSpecializationAsync(int specializationId)
+        {
+            SpecializationModel specialization = await _context.Specializations.FindAsync(specializationId);
+
+            if (specialization == null)
+                return NotFound();
+
+            SpecializationDto specializationDto = new SpecializationDto
+            {
+                Name = specialization.Name,
+                DepartmentId = specialization.DeparmentId,
+                LevelOfEducation = specialization.LevelOfEducation
+            };
+
+            return Ok(specializationDto);
         }
     }
 
