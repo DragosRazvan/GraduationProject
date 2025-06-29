@@ -168,6 +168,28 @@ namespace GraduationProject.Controllers
                 return Ok(studentDto);
         }
 
+        [HttpGet("GetStudentByEmail/{email}")]
+        public async Task<ActionResult<StudentDto>> GetStudentByEmail(string email)
+        {
+            StudentModel studentModel = await _context.Students.Where(s => s.Email == email).FirstAsync();
+
+            if (studentModel == null)
+                return NotFound("Student not found");
+
+            StudentDto studentDto = new StudentDto
+            {
+                Id = studentModel.Id,
+                FirstName = studentModel.FirstName,
+                SecondName = studentModel.SecondName,
+                Email = email,
+                LevelOfEducation = studentModel.LevelOfEducation,
+                ProjectRequestId = studentModel.ProjectRequestId,
+                SpecializationId = studentModel.SpecializationId
+            };
+
+            return Ok(studentDto);
+        }
+
         [HttpGet("{studentId}/GetDepartmentId")]
         public async Task<ActionResult<int>> GetStudentDepartmentId(int studentId)
         {
@@ -219,6 +241,60 @@ namespace GraduationProject.Controllers
             };
 
             return Ok(specializationDto);
+        }
+
+        [HttpGet("GetStudentsByFacultyId/{facultyId}")]
+        public async Task<ActionResult<ICollection<StudentWithProjectDto>>> GetStudentsByFacultyIdAsync(int facultyId)
+        {
+            List<StudentWithProjectDto> facultyStudents = new List<StudentWithProjectDto>();
+            List<DepartmentModel> departments = await _context.Departments.Where(d => d.FacultyId == facultyId).ToListAsync<DepartmentModel>();
+
+            if (departments == null)
+                return NotFound("No departments found for the faculty with id " + facultyId);
+
+            foreach(DepartmentModel department in departments)
+            {
+                List<SpecializationModel> specializations = await _context.Specializations.Where(s => s.DeparmentId == department.Id).ToListAsync<SpecializationModel>();
+
+                if (specializations == null)
+                    return NotFound("No specializations found for department " + department.Name);
+
+                foreach(SpecializationModel specialization in specializations)
+                {
+                    List<StudentModel> studentsModel = await _context.Students.Where(s => s.SpecializationId == specialization.Id).ToListAsync<StudentModel>();
+
+                    foreach(StudentModel studentModel in studentsModel)
+                    {
+                        ProjectRequestModel projectRequestModel = await _context.ProjectRequests.Where(p => p.StudentId == studentModel.Id).FirstOrDefaultAsync<ProjectRequestModel>();
+
+                        if(projectRequestModel == null)
+                        {
+                            return NotFound("No project request found for student: " + studentModel.FirstName + " " + studentModel.SecondName);
+                        }
+
+                        StudentWithProjectDto student = new StudentWithProjectDto
+                        {
+                            StudentId = studentModel.Id,
+                            FirstName = studentModel.FirstName,
+                            SecondName = studentModel.SecondName,
+                            Email = studentModel.Email,
+                            SpecializationId = studentModel.SpecializationId,
+                            SpecializationName = specialization.Name,
+                            ProjectTitle = projectRequestModel.Title,
+                            ProjectStatus = ""
+                        };
+
+                        if (projectRequestModel.IsAcceptedByProfessor)
+                            student.ProjectStatus = "acceptată";
+                        else
+                            student.ProjectStatus = "în așteptare";
+
+                        facultyStudents.Add(student);
+                    }
+                }
+            }
+
+            return Ok(facultyStudents);
         }
     }
 

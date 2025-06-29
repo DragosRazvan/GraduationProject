@@ -1,6 +1,7 @@
 ﻿using GraduationProject.DTOs;
 using GraduationProject.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace GraduationProject.Controllers
 {
@@ -14,6 +15,27 @@ namespace GraduationProject.Controllers
         {
             _context = context;
         }
+
+        [HttpGet("GetSecretaryByEmail/{secretaryEmail}")]
+        public async Task<ActionResult<SecretaryDto>> GetSecretaryByEmail(string secretaryEmail)
+        {
+            SecretaryModel secretaryModel = await _context.Secretary.Where(s => s.Email == secretaryEmail).FirstOrDefaultAsync<SecretaryModel>();
+
+            if (secretaryModel == null)
+                return NotFound("No secretary found");
+
+            SecretaryDto secretary = new SecretaryDto
+            {
+                Id = secretaryModel.Id,
+                FirstName = secretaryModel.FirstName,
+                SecondName = secretaryModel.SecondName,
+                Email = secretaryModel.Email,
+                FacultyId = secretaryModel.FacultyId
+            };
+
+            return Ok(secretary);
+        }
+
 
         [HttpPost("PostDepartment")]
         public async Task<ActionResult> PostDepartment(DepartmentDto departmentDto)

@@ -73,6 +73,53 @@ namespace GraduationProject.Controllers
             return projectsCoordinatedByProfessorDtos;
         }
 
+        [HttpGet("GetProfessorById/{professorId}")]
+        public async Task<ActionResult<ProfessorDto>> GetProfessorById(int professorId)
+        {
+            ProfessorModel professorModel = await _context.Professors.FindAsync(professorId);
+
+            
+                ProfessorDto professor = new ProfessorDto
+                {
+                    Id = professorModel.Id,
+                    FirstName = professorModel.FirstName,
+                    SecondName = professorModel.SecondName,
+                    Email = professorModel.Email,
+                    DepartmentId = professorModel.DepartmentId
+                };
+
+            return Ok(professor);
+        }
+
+        [HttpGet("GetProfessorsByFacultyId/{facultyId}")]
+        public async Task<ActionResult<ICollection<ProfessorDto>>> GetProfessorsByFacultyId(int facultyId)
+        {
+            DepartmentModel departmentModel = await _context.Departments.Where(d => d.FacultyId == facultyId).FirstOrDefaultAsync<DepartmentModel>();
+
+            if (departmentModel == null)
+                return NotFound("No department found");
+
+            List<ProfessorDto> professors = new List<ProfessorDto>();
+
+            List<ProfessorModel> professorsModel = await _context.Professors.Where(p => p.DepartmentId == departmentModel.Id).ToListAsync();
+
+            foreach(ProfessorModel professorModel in professorsModel)
+            {
+                ProfessorDto professor = new ProfessorDto
+                {
+                    Id = professorModel.Id,
+                    FirstName = professorModel.FirstName,
+                    SecondName = professorModel.SecondName,
+                    Email = professorModel.Email,
+                    DepartmentId = professorModel.DepartmentId
+                };
+
+                professors.Add(professor);
+            }
+
+            return Ok(professors);
+        }
+
         [HttpGet("GetOwnProjects/{professorId}")]
         public async Task<ActionResult<ICollection<ProfessorOwnProjectDto>>> GetOwnProjectsAsync(int professorId)
         {

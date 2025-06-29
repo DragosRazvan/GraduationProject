@@ -51,6 +51,34 @@ namespace GraduationProject.Controllers
             return Ok(projectDetailsDto);
         }
 
+        [HttpGet("GetProjectByStudentId/{studentId}")]
+        public async Task<ActionResult<ProjectDetailsDto>> GetProjectByStudentIdAsync(int studentId)
+        {
+            ProjectRequestModel projectRequestModel = await _context.ProjectRequests.Where(p => p.StudentId == studentId).FirstOrDefaultAsync<ProjectRequestModel>();
+
+            ProfessorModel professor = await _context.Professors.FindAsync(projectRequestModel.ProfessorId);
+
+            ProjectDetailsDto projectDetailsDto = new ProjectDetailsDto
+            {
+                ProjectRequestId = projectRequestModel.Id,
+                Title = projectRequestModel.Title,
+                Description = projectRequestModel.Description,
+                IsAcceptedByProfessor = projectRequestModel.IsAcceptedByProfessor,
+                StatusProjectRequest = "",
+                LevelOfEducation = projectRequestModel.LevelOfEducation,
+                StudentId = studentId,
+                ProfessorId = professor.Id,
+                ProfessorName = professor.FirstName + " " + professor.SecondName
+            };
+
+            if (projectDetailsDto.IsAcceptedByProfessor)
+                projectDetailsDto.StatusProjectRequest = "acceptată";
+            else
+                projectDetailsDto.StatusProjectRequest = "în așteptare";
+
+            return Ok(projectDetailsDto);
+        }
+
         [HttpGet("GetProjectsByProfessorId/{professorId}")]
         public async Task<ActionResult<ICollection<ProjectRequestDto>>> GetProjectsByProfessorId(int professorId){
             List<ProjectRequestModel> projectRequests = await _context.ProjectRequests.Where(p => (p.StudentId == null && p.ProfessorId == professorId)).ToListAsync<ProjectRequestModel>();
