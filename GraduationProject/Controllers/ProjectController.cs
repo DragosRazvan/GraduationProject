@@ -37,7 +37,7 @@ namespace GraduationProject.Controllers
 
             ProjectDetailsDto projectDetailsDto = new ProjectDetailsDto
             {
-                ProjectRequestId = projectModel.Id,
+                Id = projectModel.Id,
                 Title = projectModel.Title,
                 Description = projectModel.Description,
                 LevelOfEducation = projectModel.LevelOfEducation,
@@ -56,11 +56,17 @@ namespace GraduationProject.Controllers
         {
             ProjectRequestModel projectRequestModel = await _context.ProjectRequests.Where(p => p.StudentId == studentId).FirstOrDefaultAsync<ProjectRequestModel>();
 
+            if (projectRequestModel == null)
+            {
+                ProjectRequestDto prj = null;
+                return Ok(prj);
+            }
+
             ProfessorModel professor = await _context.Professors.FindAsync(projectRequestModel.ProfessorId);
 
             ProjectDetailsDto projectDetailsDto = new ProjectDetailsDto
             {
-                ProjectRequestId = projectRequestModel.Id,
+                Id = projectRequestModel.Id,
                 Title = projectRequestModel.Title,
                 Description = projectRequestModel.Description,
                 IsAcceptedByProfessor = projectRequestModel.IsAcceptedByProfessor,
